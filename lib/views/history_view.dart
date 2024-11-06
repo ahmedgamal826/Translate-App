@@ -6,12 +6,12 @@ import 'package:translator_app/models/translation_history_model.dart';
 import 'package:translator_app/views/translation_details_view.dart';
 import 'package:translator_app/widgets/show_snack_bar.dart';
 
-class HistoryPage extends StatefulWidget {
+class HistoryView extends StatefulWidget {
   @override
-  State<HistoryPage> createState() => _HistoryPageState();
+  State<HistoryView> createState() => _HistoryViewState();
 }
 
-class _HistoryPageState extends State<HistoryPage> {
+class _HistoryViewState extends State<HistoryView> {
   List<TranslationHistory> translationHistoryList = [];
 
   @override
@@ -55,6 +55,12 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        title: Text('Translation History'),
+      ),
       body: translationHistoryList.isEmpty
           ? Center(child: Text('No history found.'))
           : ListView.builder(

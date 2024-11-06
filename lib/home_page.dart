@@ -2,16 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:translator_app/views/chat_translate_view.dart';
 import 'package:translator_app/views/favourite_view.dart';
 import 'package:translator_app/views/history_view.dart';
-import 'package:translator_app/views/saved_chat_view.dart';
 import 'package:translator_app/views/translate_view.dart';
+import 'package:translator_app/widgets/custom_drawer.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 5,
+      length: 4,
       child: Scaffold(
-        drawer: const Drawer(),
+        key: scaffoldKey,
+        drawer: CustomDrawer(),
         appBar: AppBar(
           iconTheme: IconThemeData(color: Colors.white),
           backgroundColor: Color(0xff3375FD),
@@ -19,21 +27,6 @@ class HomePage extends StatelessWidget {
             'Translate',
             style: TextStyle(fontSize: 25, color: Colors.white),
           ),
-          actions: [
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                // منطق القائمة المنبثقة هنا
-              },
-              itemBuilder: (BuildContext context) {
-                return {'Settings', 'Profile', 'Logout'}.map((String choice) {
-                  return PopupMenuItem<String>(
-                    value: choice,
-                    child: Text(choice),
-                  );
-                }).toList();
-              },
-            ),
-          ],
           bottom: TabBar(
             isScrollable: false,
             indicatorColor: Colors.white,
@@ -41,12 +34,8 @@ class HomePage extends StatelessWidget {
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white.withOpacity(0.5),
             tabs: [
-              Tab(
-                icon: Icon(Icons.home),
-                text: 'Home',
-              ),
+              Tab(icon: Icon(Icons.home), text: 'Home'),
               Tab(icon: Icon(Icons.chat), text: 'Chat'),
-              Tab(icon: Icon(Icons.save), text: 'Saved'),
               Tab(icon: Icon(Icons.history), text: 'History'),
               Tab(icon: Icon(Icons.star), text: 'Favorite'),
             ],
@@ -56,8 +45,7 @@ class HomePage extends StatelessWidget {
           children: [
             TranslateView(),
             ChatTranslateView(),
-            SavedChatView(),
-            HistoryPage(),
+            HistoryView(),
             FavoritesScreen()
           ],
         ),

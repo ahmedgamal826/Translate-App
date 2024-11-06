@@ -38,7 +38,10 @@ class _LanguageButtonsState extends State<LanguageButtons> {
                 ),
               ),
               const SizedBox(width: 10),
-              Icon(Icons.arrow_drop_down)
+              Icon(
+                Icons.arrow_drop_down,
+                color: Color(0xff3375FD),
+              ),
             ],
           ),
         ),
@@ -65,7 +68,10 @@ class _LanguageButtonsState extends State<LanguageButtons> {
                 ),
               ),
               const SizedBox(width: 10),
-              Icon(Icons.arrow_drop_down)
+              Icon(
+                Icons.arrow_drop_down,
+                color: Color(0xff3375FD),
+              ),
             ],
           ),
         ),

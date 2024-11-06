@@ -51,6 +51,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        title: Text('Translation Favorites'),
+      ),
+      backgroundColor: Colors.white,
       body: FutureBuilder<List<TranslationHistory>>(
         future: _favoritesFuture,
         builder: (context, snapshot) {

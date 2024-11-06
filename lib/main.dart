@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:translator_app/views/splash_view.dart';
 
 import 'home_page.dart';
 
@@ -13,7 +14,7 @@ class TranslatorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HomePage(),
+      home: SplashScreen(),
     );
   }
 }

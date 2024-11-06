@@ -42,6 +42,8 @@ class _TranslateView extends State<TranslateView> {
 
   String emojiRegex = r'(\p{Emoji})';
 
+  ScrollController scrollController = ScrollController();
+
   Future<void> pickImageAndExtractText() async {
     final pickedSource = await showDialog<ImageSource>(
       context: context,
@@ -300,8 +302,14 @@ class _TranslateView extends State<TranslateView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        title: Text('Translation'),
+      ),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
+        controller: scrollController,
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(
@@ -387,6 +395,14 @@ class _TranslateView extends State<TranslateView> {
                                       _translatorService
                                           .getLanguageCode(destinationLanguage),
                                       languageController.text,
+                                    );
+
+                                    // Scroll to the bottom after adding the message
+                                    scrollController.animateTo(
+                                      scrollController.position.maxScrollExtent,
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      curve: Curves.easeOut,
                                     );
                                   }
                                 },
