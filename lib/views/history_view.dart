@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:translator_app/models/translation_history_model.dart';
 import 'package:translator_app/views/translation_details_view.dart';
+import 'package:translator_app/widgets/delete_history_dialog.dart';
 import 'package:translator_app/widgets/show_snack_bar.dart';
 
 class HistoryView extends StatefulWidget {
+  HistoryView({super.key});
   @override
   State<HistoryView> createState() => _HistoryViewState();
 }
@@ -136,53 +138,7 @@ class _HistoryViewState extends State<HistoryView> {
                         IconButton(
                           icon: Icon(Icons.delete, color: Colors.white),
                           onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: Text('Delete Translation'),
-                                  content: Text(
-                                    'Are you sure you want to delete this translation?',
-                                    style: TextStyle(fontSize: 20),
-                                  ),
-                                  actions: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        MaterialButton(
-                                          color: Color(0xff3375FD),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: Text(
-                                            'Cancel',
-                                            style: TextStyle(
-                                              fontSize: 20,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                        MaterialButton(
-                                          color: Color(0xff3375FD),
-                                          onPressed: () {
-                                            deleteTranslation(
-                                                context, translation);
-                                          },
-                                          child: Text(
-                                            'Delete',
-                                            style: TextStyle(
-                                              fontSize: 20,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  ],
-                                );
-                              },
-                            );
+                            DeleteHistory(context, translation);
                           },
                         ),
                       ],
@@ -191,6 +147,18 @@ class _HistoryViewState extends State<HistoryView> {
                 );
               },
             ),
+    );
+  }
+
+  Future<dynamic> DeleteHistory(
+      BuildContext context, TranslationHistory translation) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return DeleteHistoryDialog(
+          deleteTranslation: () => deleteTranslation(context, translation),
+        );
+      },
     );
   }
 }

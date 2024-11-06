@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:translator_app/services/chat_translate_services.dart';
 import 'package:translator_app/services/translator_services.dart';
 import 'package:translator_app/views/language_selection_page.dart';
@@ -261,10 +260,8 @@ class _ChatTranslateView extends State<ChatTranslateView> {
                                   ),
                                   onPressed: () {
                                     setState(() {
-                                      _isImageSelected =
-                                          false; // Hide the image
-                                      _selectedImage =
-                                          null; // Reset the selected image
+                                      _isImageSelected = false;
+                                      _selectedImage = null;
                                     });
                                   },
                                 ),

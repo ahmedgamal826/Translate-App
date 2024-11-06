@@ -6,6 +6,8 @@ import 'package:translator_app/views/translation_details_view.dart';
 import 'package:translator_app/widgets/show_snack_bar.dart';
 
 class FavoritesScreen extends StatefulWidget {
+  FavoritesScreen({super.key});
+
   @override
   _FavoritesScreenState createState() => _FavoritesScreenState();
 }
@@ -33,19 +35,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Future<void> deleteFavorite(TranslationHistory favorite) async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Remove from favorites
     favorites.removeWhere((item) => item.input == favorite.input);
 
-    // Update SharedPreferences with the new favorites list
     await prefs.setStringList(
       'favorite_translations',
       favorites.map((item) => jsonEncode(item.toJson())).toList(),
     );
 
-    // Update the state to reflect the changes
-    setState(() {
-      // This will rebuild the widget to reflect the updated favorites
-    });
+    setState(() {});
   }
 
   @override

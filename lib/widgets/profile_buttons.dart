@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:translator_app/widgets/show_snack_bar.dart';
 
-class SaveProfileButton extends StatelessWidget {
-  SaveProfileButton({
+class ProfileButtons extends StatelessWidget {
+  ProfileButtons({
     super.key,
     required this.OnPressedProfile,
     required this.btnText,

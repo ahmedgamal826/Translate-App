@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:translator_app/views/splash_view.dart';
 
-import 'home_page.dart';
+import 'views/home_view.dart';
 
 void main() {
   runApp(const TranslatorApp());

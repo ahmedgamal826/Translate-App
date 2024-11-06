@@ -18,6 +18,9 @@ class LanguageButtons extends StatefulWidget {
 }
 
 class _LanguageButtonsState extends State<LanguageButtons> {
+  // إضافة متغير لحفظ اتجاه الحركة
+  bool isSwapping = false;
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -30,11 +33,27 @@ class _LanguageButtonsState extends State<LanguageButtons> {
           onPressed: () => widget.selectLanguage(context, true),
           child: Row(
             children: [
-              Text(
-                widget.originalLanguage,
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 20,
+              AnimatedSwitcher(
+                duration: Duration(milliseconds: 500), // زيادة المدة
+                transitionBuilder: (child, animation) {
+                  if (isSwapping) {
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                        begin: Offset(1.0, 0.0),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    );
+                  }
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: Text(
+                  widget.originalLanguage,
+                  key: ValueKey<String>(widget.originalLanguage),
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -46,7 +65,12 @@ class _LanguageButtonsState extends State<LanguageButtons> {
           ),
         ),
         IconButton(
-          onPressed: widget.swapLanguage,
+          onPressed: () {
+            setState(() {
+              isSwapping = !isSwapping;
+            });
+            widget.swapLanguage();
+          },
           icon: Icon(
             Icons.swap_horiz,
             color: Color(0xff3375FD),
@@ -60,11 +84,27 @@ class _LanguageButtonsState extends State<LanguageButtons> {
           onPressed: () => widget.selectLanguage(context, false),
           child: Row(
             children: [
-              Text(
-                widget.destinationLanguage,
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 20,
+              AnimatedSwitcher(
+                duration: Duration(milliseconds: 500),
+                transitionBuilder: (child, animation) {
+                  if (isSwapping) {
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                        begin: Offset(-1.0, 0.0),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    );
+                  }
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: Text(
+                  widget.destinationLanguage,
+                  key: ValueKey<String>(widget.destinationLanguage),
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),

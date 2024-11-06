@@ -1,20 +1,20 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:speech_to_text/speech_to_text.dart'
-    as stt; // Import the speech_to_text package
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:translator_app/models/translation_history_model.dart';
 import 'package:translator_app/services/translator_services.dart';
 import 'package:translator_app/views/language_selection_page.dart';
+import 'package:translator_app/widgets/camera_and_gallery_dialog.dart';
 import 'package:translator_app/widgets/language_buttons.dart';
 import 'package:translator_app/widgets/loading_dots.dart';
-import 'package:translator_app/widgets/show_snack_bar.dart';
 import 'package:translator_app/widgets/text_field.dart';
+import 'package:translator_app/widgets/translation_icons.dart';
+import 'package:translator_app/widgets/translation_output_container.dart';
 
 final _formKey = GlobalKey<FormState>();
 
@@ -32,13 +32,12 @@ class _TranslateView extends State<TranslateView> {
   String destinationLanguage = "Arabic";
   String output = "";
   final TranslatorService _translatorService = TranslatorService();
-  stt.SpeechToText _speech =
-      stt.SpeechToText(); // Initialize the SpeechToText instance
+  stt.SpeechToText _speech = stt.SpeechToText();
 
-  FlutterTts _flutterTts = FlutterTts(); // Initialize FlutterTts instance
+  FlutterTts _flutterTts = FlutterTts();
 
-  bool _isListening = false; // Track the listening state
-  final ImagePicker picker = ImagePicker(); // Intialize ImagePicker Instance
+  bool _isListening = false;
+  final ImagePicker picker = ImagePicker();
 
   String emojiRegex = r'(\p{Emoji})';
 
@@ -48,63 +47,7 @@ class _TranslateView extends State<TranslateView> {
     final pickedSource = await showDialog<ImageSource>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('From where do you want to take the photo?'),
-          actions: [
-            Center(
-              child: Column(
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(
-                      context,
-                      ImageSource.camera,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.camera_alt,
-                          size: 30,
-                          color: Colors.black,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Camera',
-                          style: TextStyle(
-                            fontSize: 23,
-                            color: Colors.blue,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(
-                      context,
-                      ImageSource.gallery,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.photo,
-                          size: 30,
-                          color: Colors.black,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Gallery',
-                          style: TextStyle(
-                            fontSize: 23,
-                            color: Colors.blue,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            )
-          ],
-        );
+        return CameraAndGalleryDialog();
       },
     );
 
@@ -235,8 +178,6 @@ class _TranslateView extends State<TranslateView> {
     }
   }
 
-//////////////////////////////
-
   Future<void> saveTranslation(String input, String output) async {
     final prefs = await SharedPreferences.getInstance();
     final List<String>? history =
@@ -270,32 +211,28 @@ class _TranslateView extends State<TranslateView> {
         print('Error speaking: $e'); // Log any errors that occur
       }
     } else {
-      print('Nothing to speak'); // Inform that there's nothing to say
+      print('Nothing to speak');
     }
   }
 
   void speakInputText() async {
-    // Use the input text from the languageController instead of output
     String textToSpeak = languageController.text;
 
-    // Log the text to speak for debugging
     print('Text to speak: $textToSpeak');
 
-    // Set the language for TTS
-    await _flutterTts.setLanguage(_translatorService
-        .getLanguageCode(originalLanguage)); // Use originalLanguage for input
+    await _flutterTts
+        .setLanguage(_translatorService.getLanguageCode(originalLanguage));
     await _flutterTts.setPitch(1.0);
 
-    // Only speak if the text is not empty
     if (textToSpeak.isNotEmpty) {
       try {
         await _flutterTts.speak(textToSpeak);
-        print('Speaking: $textToSpeak'); // Log that speaking is happening
+        print('Speaking: $textToSpeak');
       } catch (e) {
-        print('Error speaking: $e'); // Log any errors that occur
+        print('Error speaking: $e');
       }
     } else {
-      print('Nothing to speak'); // Inform that there's nothing to say
+      print('Nothing to speak');
     }
   }
 
@@ -343,97 +280,32 @@ class _TranslateView extends State<TranslateView> {
                             onPressed: clearInputs,
                           ),
                         ),
-                        Positioned(
-                          left: 10,
-                          bottom: 10,
-                          right: 10,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: IconButton(
-                                  onPressed: pickImageAndExtractText,
-                                  icon: Icon(
-                                    Icons.camera_alt,
-                                    color: Colors.blue,
-                                    size: 30,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: IconButton(
-                                  onPressed: _isListening
-                                      ? _stopListening
-                                      : _startListening,
-                                  icon: Icon(
-                                    Icons.mic,
-                                    color: Colors.blue,
-                                    size: 30,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: IconButton(
-                                  onPressed: speakInputText,
-                                  icon: Icon(
-                                    Icons.volume_up,
-                                    color: Colors.blue,
-                                    size: 30,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 30),
-                              MaterialButton(
-                                onPressed: () {
-                                  if (languageController.text.isNotEmpty) {
-                                    translate(
-                                      _translatorService
-                                          .getLanguageCode(originalLanguage),
-                                      _translatorService
-                                          .getLanguageCode(destinationLanguage),
-                                      languageController.text,
-                                    );
+                        TranslationIcons(
+                          pickImageAndExtractText: pickImageAndExtractText,
+                          speakInputText: speakInputText,
+                          startAndStopListening:
+                              _isListening ? _stopListening : _startListening,
+                          OnpressedTranslateButton: () {
+                            if (languageController.text.isNotEmpty) {
+                              translate(
+                                _translatorService
+                                    .getLanguageCode(originalLanguage),
+                                _translatorService
+                                    .getLanguageCode(destinationLanguage),
+                                languageController.text,
+                              );
 
-                                    // Scroll to the bottom after adding the message
-                                    scrollController.animateTo(
-                                      scrollController.position.maxScrollExtent,
-                                      duration:
-                                          const Duration(milliseconds: 300),
-                                      curve: Curves.easeOut,
-                                    );
-                                  }
-                                },
-                                color: Color(0xff3676F4),
-                                child: SizedBox(
-                                  width: 120,
-                                  height: 50,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(12),
-                                        child: Text(
-                                          isTranslating ? '' : 'Translate',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      if (isTranslating)
-                                        CircularProgressIndicator(
-                                          color: Colors.white,
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            ],
-                          ),
+                              scrollController.animateTo(
+                                scrollController.position.maxScrollExtent,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOut,
+                              );
+                            }
+                          },
+                          originalLanguage: originalLanguage,
+                          destinationLanguage: destinationLanguage,
+                          isTranslating: isTranslating,
+                          languageController: languageController,
                         ),
                       ],
                     ),
@@ -446,75 +318,10 @@ class _TranslateView extends State<TranslateView> {
               isTranslating == true
                   ? LoadingDots()
                   : output.isNotEmpty
-                      ? Stack(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Color(0xff3375FD),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 65,
-                                ),
-                                child: Center(
-                                  child: SelectableText(
-                                    output,
-                                    textAlign: destinationLanguage == 'Arabic'
-                                        ? TextAlign.right
-                                        : TextAlign.left,
-                                    style: TextStyle(
-                                      fontSize: 25,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              left: 10,
-                              bottom: 10,
-                              right: 10,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: IconButton(
-                                      onPressed: () {
-                                        // to copy text
-                                        Clipboard.setData(
-                                                ClipboardData(text: output))
-                                            .then((_) {
-                                          customShowSnackBar(
-                                            context: context,
-                                            content: 'تم نسخ النص إلى الحافظة',
-                                          );
-                                        });
-                                      },
-                                      icon: Icon(
-                                        Icons.copy_outlined,
-                                        color: Colors.white,
-                                        size: 28,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: IconButton(
-                                      onPressed: speakOutputText,
-                                      icon: Icon(
-                                        Icons.volume_up,
-                                        color: Colors.white,
-                                        size: 30,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                      ? TranslationOutputContainer(
+                          output: output,
+                          destinationLanguage: destinationLanguage,
+                          speakOutputText: speakOutputText,
                         )
                       : SizedBox.shrink(),
               SizedBox(height: 60),

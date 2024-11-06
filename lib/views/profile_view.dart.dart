@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:translator_app/widgets/profile_text_field.dart';
-import 'package:translator_app/widgets/save_profile_button.dart';
+import 'package:translator_app/widgets/profile_buttons.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -134,14 +134,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 label: 'Enter your phone number',
               ),
               SizedBox(height: 30),
-              SaveProfileButton(
+              ProfileButtons(
                 OnPressedProfile: _saveProfile,
                 btnText: 'Save Profile',
-                backgroundColor: Color(0xff3375FD),
+                backgroundColor: Colors.green,
                 snackBarContent: 'Profile saved successfully!',
               ),
               SizedBox(height: 16),
-              SaveProfileButton(
+              ProfileButtons(
                 OnPressedProfile: _resetProfile,
                 backgroundColor: Colors.red,
                 btnText: 'Reset Profile',

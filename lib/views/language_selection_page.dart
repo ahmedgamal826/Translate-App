@@ -62,36 +62,60 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
+              style: TextStyle(color: Colors.white),
+              cursorColor: Colors.black,
               onChanged: (value) {
                 filterLanguages(value);
               },
               decoration: InputDecoration(
-                labelText: 'Search Language',
-                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.blue,
+                hintText: 'Search Language',
+                hintStyle: TextStyle(color: Colors.white),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                focusColor: Colors.blue,
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                    color: Colors.blue,
+                    width: 2,
+                  ),
+                ),
               ),
             ),
           ),
+          const SizedBox(height: 10),
           Expanded(
-            child: ListView.builder(
-              itemCount: filteredLanguages.length,
-              itemBuilder: (context, index) {
-                final language = filteredLanguages[index];
-                return ListTile(
-                  title: Text(language),
-                  trailing: selectedLanguage == language
-                      ? Icon(
-                          Icons.check,
-                          color: Colors.blue,
-                          size: 30,
-                        )
-                      : null,
-                  onTap: () {
-                    setState(() {
-                      selectedLanguage = language;
-                    });
-                  },
-                );
-              },
+            child: Scrollbar(
+              thickness: 6,
+              thumbVisibility: true, // Always show the scrollbar thumb
+              radius: Radius.circular(10), // Rounded corners for scrollbar
+              child: ListView.builder(
+                itemCount: filteredLanguages.length,
+                itemBuilder: (context, index) {
+                  final language = filteredLanguages[index];
+                  return ListTile(
+                    title: Text(
+                      language,
+                      style: TextStyle(fontSize: 20),
+                    ),
+                    trailing: selectedLanguage == language
+                        ? Icon(
+                            Icons.check,
+                            color: Colors.blue,
+                            size: 30,
+                          )
+                        : null,
+                    onTap: () {
+                      setState(() {
+                        selectedLanguage = language;
+                      });
+                    },
+                  );
+                },
+              ),
             ),
           ),
         ],
