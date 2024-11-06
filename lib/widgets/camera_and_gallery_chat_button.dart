@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class CameraAndGallery extends StatefulWidget {
-  CameraAndGallery({
+class CameraAndGalleryChatButtons extends StatelessWidget {
+  CameraAndGalleryChatButtons({
     super.key,
     required this.pickImageFromCamera,
     required this.pickImageFromGallery,
@@ -11,11 +11,6 @@ class CameraAndGallery extends StatefulWidget {
   void Function()? pickImageFromGallery;
 
   @override
-  State<CameraAndGallery> createState() => _CameraAndGalleryState();
-}
-
-class _CameraAndGalleryState extends State<CameraAndGallery> {
-  @override
   Widget build(BuildContext context) {
     return Positioned(
       top: 0,
@@ -23,7 +18,7 @@ class _CameraAndGalleryState extends State<CameraAndGallery> {
       child: Row(
         children: [
           IconButton(
-            onPressed: widget.pickImageFromCamera,
+            onPressed: pickImageFromCamera,
             icon: Icon(
               Icons.camera_alt,
               size: 30,
@@ -31,7 +26,7 @@ class _CameraAndGalleryState extends State<CameraAndGallery> {
             ),
           ),
           IconButton(
-            onPressed: widget.pickImageFromGallery,
+            onPressed: pickImageFromGallery,
             icon: Icon(
               Icons.photo,
               size: 30,

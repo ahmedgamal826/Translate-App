@@ -30,9 +30,8 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeIn),
     );
 
-    _controller.forward(); // يبدأ الأنيمشن بمجرد تحميل الصفحة
+    _controller.forward();
 
-    // بعد الانتهاء من الأنيمشن، التنقل إلى الصفحة الرئيسية
     Future.delayed(Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
@@ -67,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen>
             Text(
               'Translator App',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 30,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),

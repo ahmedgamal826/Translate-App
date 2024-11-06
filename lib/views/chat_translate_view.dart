@@ -1,14 +1,19 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:translator_app/services/chat_translate_services.dart';
 import 'package:translator_app/services/translator_services.dart';
 import 'package:translator_app/views/language_selection_page.dart';
-import 'package:translator_app/widgets/camera_and_gallery.dart';
+import 'package:translator_app/widgets/camera_and_gallery_chat_button.dart';
 import 'package:translator_app/widgets/chat_translate_list_view.dart';
 import 'package:translator_app/widgets/chat_translate_text_field.dart';
 import 'package:translator_app/widgets/language_buttons.dart';
+import 'package:translator_app/widgets/send_and_mic_button.dart';
+import 'package:translator_app/widgets/show_small_chat_image.dart';
+import 'package:translator_app/widgets/show_snack_bar.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class ChatTranslateView extends StatefulWidget {
@@ -28,60 +33,124 @@ class _ChatTranslateView extends State<ChatTranslateView> {
   final ImagePicker picker = ImagePicker();
   bool _isImageSelected = false;
   File? _selectedImage;
-  bool _isListening = false; // Track the listening state
+  bool _isListening = false;
 
-  stt.SpeechToText _speech =
-      stt.SpeechToText(); // Initialize the SpeechToText instance
+  final ChatTranslateServices chatTranslateServices = ChatTranslateServices();
 
-  FlutterTts _flutterTts = FlutterTts(); // Initialize FlutterTts instance
-  final ChatTranslateServices chatService =
-      ChatTranslateServices(); // Use ChatService
+  stt.SpeechToText _speech = stt.SpeechToText();
 
-  void sendMessage() async {
-    await chatService.sendMessage(context, _textController, chatMessages,
-        _scrollController, _isImageSelected, _selectedImage);
+  void _sendMessage() async {
+    if (_textController.text.isEmpty && !_isImageSelected) return;
+
+    final String userMessage = _textController.text;
+    final String timestamp =
+        DateFormat('yyyy-MM-dd hh:mm a').format(DateTime.now());
+
     setState(() {
-      // Reset image selection state after sending message
-      _isImageSelected = false;
-      _selectedImage = null;
+      chatMessages.add({
+        'type': 'user',
+        'message': userMessage,
+        'time': timestamp,
+        'image': _selectedImage != null ? _selectedImage!.path : null,
+      });
     });
+
+    if (_isImageSelected) {
+      final inputImage = InputImage.fromFile(_selectedImage!);
+      final textDetector = GoogleMlKit.vision.textRecognizer();
+
+      try {
+        final RecognizedText recognizedText =
+            await textDetector.processImage(inputImage);
+        String rawText = recognizedText.text;
+        setState(() {});
+        String translatedText = await _translatorService.translate(
+          _translatorService.getLanguageCode(originalLanguage),
+          _translatorService.getLanguageCode(destinationLanguage),
+          rawText,
+        );
+        _textController.clear();
+        FocusScope.of(context).unfocus();
+
+        setState(() {
+          chatMessages.add({
+            'type': 'translator',
+            'message': translatedText,
+            'time': timestamp,
+          });
+        });
+        _isImageSelected = false;
+        _selectedImage = null;
+      } finally {
+        await textDetector.close();
+      }
+    } else {
+      String translatedText = await _translatorService.translate(
+        _translatorService.getLanguageCode(originalLanguage),
+        _translatorService.getLanguageCode(destinationLanguage),
+        userMessage,
+      );
+
+      setState(() {
+        chatMessages.add({
+          'type': 'translator',
+          'message': translatedText,
+          'time': timestamp,
+        });
+      });
+    }
+    _textController.clear();
+    FocusScope.of(context).unfocus();
   }
 
   @override
   void dispose() {
-    _scrollController.dispose(); // Step 3: Dispose of the ScrollController
+    _scrollController.dispose();
     super.dispose();
   }
 
-  void confirmDeleteMessage(int index) {
-    chatService.confirmDeleteMessage(context, index, (index) {
-      chatService.removeMessage(chatMessages, index);
-      setState(() {});
-    });
+  void _onDeleteMessage() {
+    setState(() {}); // Rebuild the widget to update the UI
+    customShowSnackBar(
+        context: context, content: 'Message deleted successfully');
   }
 
-  // Method to handle image selection from gallery
+  Future<void> pickImageAndExtractText(ImageSource source) async {
+    final XFile? image = await picker.pickImage(source: source);
+    if (image != null) {
+      setState(() {
+        _isImageSelected = true;
+        _selectedImage = File(image.path); // Store the selected image
+      });
+    } else {
+      setState(() {
+        _isImageSelected = false;
+        _selectedImage = null;
+      });
+    }
+  }
+
   void pickImageFromGallery() {
-    chatService.pickImageFromGallery(context, (File? image) {
-      setState(() {
-        _isImageSelected = image != null;
-        _selectedImage = image; // Store the selected image
-      });
-    });
+    pickImageAndExtractText(ImageSource.gallery);
   }
 
-  // Method to handle image selection from camera
   void pickImageFromCamera() {
-    chatService.pickImageFromCamera(context, (File? image) {
-      setState(() {
-        _isImageSelected = image != null;
-        _selectedImage = image; // Store the selected image
-      });
-    });
+    pickImageAndExtractText(ImageSource.camera);
   }
 
-  void openImage(BuildContext context, String imagePath) {
-    chatService.openImage(context, imagePath);
+  void _openImage(BuildContext context, String imagePath) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          backgroundColor: Colors.black,
+          body: PhotoView(
+            imageProvider: FileImage(File(imagePath)),
+            heroAttributes: PhotoViewHeroAttributes(tag: imagePath),
+          ),
+        ),
+      ),
+    );
   }
 
   void selectLanguage(BuildContext context, bool isSource) async {
@@ -115,96 +184,39 @@ class _ChatTranslateView extends State<ChatTranslateView> {
     });
   }
 
-  void _startListening() async {
-    if (!_isListening) {
-      bool available = await _speech.initialize(
-        onStatus: (val) {
-          print('onStatus: $val');
-          if (val == "listening") {
-            setState(() {
-              _isListening = true;
-            });
-          } else if (val == "notListening") {
-            setState(() {
-              _isListening = false;
-            });
-          }
-        },
-        onError: (val) => print('onError: $val'),
-      );
-
-      if (available) {
-        _speech.listen(
-          onResult: (result) {
-            setState(() {
-              _textController.text = result.recognizedWords;
-            });
-          },
-          localeId: _translatorService.getLanguageCode(
-            originalLanguage,
-          ),
-        );
-
-        // Scroll to the bottom after adding the translated message
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-
-        _textController.clear();
-        FocusScope.of(context).unfocus();
-      } else {
-        print("Speech recognition is not available.");
-      }
-    } else {
-      _speech.stop();
-      setState(() {
-        _isListening = false;
-      });
-    }
+  void _startListening() {
+    chatTranslateServices.startListening(
+      textController: _textController,
+      onListeningStarted: () {
+        setState(() {
+          _isListening = true;
+        });
+      },
+      onListeningStopped: () {
+        setState(() {
+          _isListening = false;
+        });
+      },
+      originalLanguage: originalLanguage,
+      translatorService: _translatorService,
+    );
   }
 
   void _stopListening() {
-    if (_isListening) {
+    chatTranslateServices.stopListening();
+    setState(() {
       _isListening = false;
-      _speech.stop();
-    }
-  }
-
-  void speakInputText() async {
-    // Use the input text from the languageController instead of output
-    String textToSpeak = _textController.text;
-
-    // Log the text to speak for debugging
-    print('Text to speak: $textToSpeak');
-
-    // Set the language for TTS
-    await _flutterTts.setLanguage(_translatorService
-        .getLanguageCode(originalLanguage)); // Use originalLanguage for input
-    await _flutterTts.setPitch(1.0);
-
-    // Only speak if the text is not empty
-    if (textToSpeak.isNotEmpty) {
-      try {
-        await _flutterTts.speak(textToSpeak);
-        print('Speaking: $textToSpeak'); // Log that speaking is happening
-      } catch (e) {
-        print('Error speaking: $e'); // Log any errors that occur
-      }
-    } else {
-      print('Nothing to speak'); // Inform that there's nothing to say
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         centerTitle: true,
-        title: Text('Chat With Translator'),
+        title: Text(
+          'Chat With Translator',
+        ),
       ),
       body: Column(
         children: [
@@ -216,9 +228,16 @@ class _ChatTranslateView extends State<ChatTranslateView> {
           ),
           ChatTranslateListView(
             chatMessages: chatMessages,
-            confirmDeletion: confirmDeleteMessage,
+            confirmDeletion: (index) {
+              chatTranslateServices.confirmDeleteMessage(
+                context: context,
+                chatMessages: chatMessages,
+                index: index,
+                onDelete: _onDeleteMessage,
+              );
+            },
             destinationLanguage: destinationLanguage,
-            openImage: openImage,
+            openImage: _openImage,
             scrollController: _scrollController,
           ),
           // Text Field
@@ -233,74 +252,43 @@ class _ChatTranslateView extends State<ChatTranslateView> {
                       Column(
                         children: [
                           ChatTranslateTextField(
+                            textController: _textController,
                             onChanged: (text) {
                               setState(() {});
                             },
-                            textController: _textController,
                           ),
                           if (_isImageSelected) // Show the selected image as a thumbnail
-                            Stack(
-                              alignment: Alignment.topRight,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    top: 8.0,
-                                  ),
-                                  child: Image.file(
-                                    _selectedImage!,
-                                    height: 100,
-                                    width: 100,
-                                    fit: BoxFit.fill,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.close,
-                                    color: Colors.red,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _isImageSelected = false;
-                                      _selectedImage = null;
-                                    });
+                            ShowSmallChatImage(
+                              selectedImage: _selectedImage,
+                              closeImage: () {
+                                setState(
+                                  () {
+                                    _isImageSelected = false; // Hide the image
+                                    _selectedImage = null;
                                   },
-                                ),
-                              ],
+                                );
+                              },
                             ),
                         ],
                       ),
-                      CameraAndGallery(
+                      CameraAndGalleryChatButtons(
                         pickImageFromCamera: pickImageFromCamera,
                         pickImageFromGallery: pickImageFromGallery,
-                      ),
+                      )
                     ],
                   ),
                 ),
                 const SizedBox(width: 5),
-                Padding(
-                  padding: _isImageSelected
-                      ? const EdgeInsets.only(bottom: 110)
-                      : const EdgeInsets.only(),
-                  child: CircleAvatar(
-                    radius: 23,
-                    backgroundColor: Color(0xff3375FD),
-                    child: IconButton(
-                        icon: Icon(
-                          _textController.text.isEmpty && !_isImageSelected
-                              ? Icons.mic
-                              : Icons.send,
-                          size: 30,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          if (_textController.text.isEmpty &&
-                              !_isImageSelected) {
-                            _isListening ? _stopListening() : _startListening();
-                          } else {
-                            sendMessage();
-                          }
-                        }),
-                  ),
+                SendAndMicButton(
+                  isImageSelected: _isImageSelected,
+                  textController: _textController,
+                  onPressedButton: () {
+                    if (_textController.text.isEmpty && !_isImageSelected) {
+                      _isListening ? _stopListening() : _startListening();
+                    } else {
+                      _sendMessage();
+                    }
+                  },
                 ),
               ],
             ),

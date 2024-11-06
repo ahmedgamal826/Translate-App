@@ -83,6 +83,13 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
                     width: 2,
                   ),
                 ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                    color: Colors.blue,
+                    width: 2,
+                  ),
+                ),
               ),
             ),
           ),

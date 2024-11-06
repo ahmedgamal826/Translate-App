@@ -4,12 +4,14 @@ import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:translator_app/services/translator_services.dart';
-import 'package:translator_app/widgets/show_snack_bar.dart';
+import 'package:translator_app/widgets/delete_chat_dialog.dart';
 
 class ChatTranslateServices {
   final TranslatorService _translatorService = TranslatorService();
   final ImagePicker picker = ImagePicker();
+  final stt.SpeechToText _speech = stt.SpeechToText();
 
   final TranslatorService translatorService = TranslatorService();
 
@@ -85,74 +87,44 @@ class ChatTranslateServices {
     FocusScope.of(context).unfocus();
   }
 
-  void confirmDeleteMessage(
-      BuildContext context, int index, Function onDelete) {
+  ///////////////////////////////////
+
+  void scrollBottom(ScrollController scrollController) {
+    scrollController.animateTo(
+      scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  ////////////////////////// Yes ////////////////////////////
+
+  void confirmDeleteMessage({
+    required BuildContext context,
+    required List<Map<String, dynamic>> chatMessages,
+    required int index,
+    required VoidCallback onDelete,
+  }) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Delete Message',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          content: Text(
-            'Are you sure you want to delete this message?',
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.black,
-            ),
-          ),
-          actions: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                MaterialButton(
-                  color: Color(0xff3375FD),
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.white,
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
-                  },
-                ),
-                MaterialButton(
-                  color: Color(0xff3375FD),
-                  child: Text(
-                    'Delete',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.white,
-                    ),
-                  ),
-                  onPressed: () {
-                    onDelete(
-                        index); // Call the delete function passed as a callback
-                    Navigator.of(context).pop(); // Close the dialog
-                    customShowSnackBar(
-                      context: context,
-                      content: 'Message deleted successfully',
-                    );
-                  },
-                ),
-              ],
-            )
-          ],
+        return DeleteChatDialog(
+          removeMessage: () {
+            FocusScope.of(context).unfocus(); // Hide the keyboard
+            removeMessage(chatMessages, index);
+            Navigator.of(context).pop(); // Close the dialog
+            onDelete(); // Call the callback to update UI or show a SnackBar
+          },
         );
       },
     );
   }
 
-  // This method removes a message from the list
   void removeMessage(List<Map<String, dynamic>> chatMessages, int index) {
     chatMessages.removeAt(index);
   }
+
+  /////////////////////////////////////////////////
 
   Future<void> pickImageAndExtractText(
       ImageSource source, Function(File?) onImagePicked) async {
@@ -191,5 +163,47 @@ class ChatTranslateServices {
         ),
       ),
     );
+  }
+
+/////////////////////// Yes //////////////////////
+  Future<void> startListening({
+    required TextEditingController textController,
+    required VoidCallback onListeningStarted,
+    required VoidCallback onListeningStopped,
+    required String originalLanguage,
+    required TranslatorService translatorService,
+  }) async {
+    bool isListening = false;
+
+    bool available = await _speech.initialize(
+      onStatus: (val) {
+        if (val == "listening") {
+          isListening = true;
+          onListeningStarted();
+        } else if (val == "notListening") {
+          isListening = false;
+          onListeningStopped();
+        }
+      },
+      onError: (val) => print('onError: $val'),
+    );
+
+    if (available) {
+      _speech.listen(
+        onResult: (result) {
+          textController.text = result.recognizedWords;
+        },
+        localeId: translatorService.getLanguageCode(originalLanguage),
+      );
+
+      // onScrollToBottom();
+      textController.clear();
+    } else {
+      print("Speech recognition is not available.");
+    }
+  }
+
+  void stopListening() {
+    _speech.stop();
   }
 }

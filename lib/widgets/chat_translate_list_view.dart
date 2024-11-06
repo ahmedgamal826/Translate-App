@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:translator_app/services/chat_translate_services.dart';
 
 class ChatTranslateListView extends StatefulWidget {
   ChatTranslateListView({
@@ -23,8 +24,22 @@ class ChatTranslateListView extends StatefulWidget {
 }
 
 class _ChatTranslateListViewState extends State<ChatTranslateListView> {
+  late ChatTranslateServices chatServices;
+
+  @override
+  void initState() {
+    super.initState();
+    chatServices = ChatTranslateServices();
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Automatically scroll to the bottom when messages are updated
+    if (widget.chatMessages.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        chatServices.scrollBottom(widget.scrollController);
+      });
+    }
     return Expanded(
       child: ListView.builder(
         controller: widget.scrollController,
